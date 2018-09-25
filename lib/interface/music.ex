@@ -4,6 +4,16 @@ defmodule EctoPerfecto.Interface.Music do
   alias EctoPerfecto.{Album, Artist, Repo}
 
   @doc """
+  Get all of an artists songs
+  """
+  def artist_songs(artist_name) do
+    artist_name
+    |> artist_song_query
+    |> Repo.all
+    |> handle_result
+  end
+
+  @doc """
   A search interface for artists and albums.
   There are two potential first arguments: `:album`, or `:artist`.
   Following these is a search term.
@@ -32,12 +42,9 @@ defmodule EctoPerfecto.Interface.Music do
   This doesnt have error handling yet lol so tread lightly.
   """
   def album_count(artist) do
-    [count] =
-      artist
-      |> album_count_query
-      |> Repo.all
-
-    count
+    artist
+    |> album_count_query
+    |> Repo.one
   end
 
   def album_count_query(artist) do
@@ -46,6 +53,26 @@ defmodule EctoPerfecto.Interface.Music do
     from lawn_boy in Album,
     where: lawn_boy.artist_id == ^artist_id,
     select: count(lawn_boy.id)
+  end
+
+  #  @doc """
+  #  this doesnt work but sorta shows it lol
+  #  """
+  #  def album_count_pipes(artist) do
+  #    Album
+  #    |> select([a], count(a.id))
+  #    |> where([a], a.artist_id, ^artist_id)
+  #    |> Repo.one
+  #  end
+
+  @doc """
+  Run a raw query with your own arguments to be interpolated
+  IE
+  query: "SELECT power($1, $2)
+
+  """
+  def raw_query(query, args) do
+    Ecto.Adapters.SQL.query(Repo, query, args)
   end
 
   defp artist_search_query(name) do
@@ -71,5 +98,13 @@ defmodule EctoPerfecto.Interface.Music do
 
   defp handle_result(_) do
     {:error, "something weird went down"}
+  end
+
+  defp artist_song_query(artist) do
+    from t in EctoPerfecto.Track,
+    join: a in assoc(t, :album),
+    join: art in assoc(a, :artist),
+    where: art.name == ^artist,
+    select: %{track_name: t.name, artist_name: art.name}
   end
 end
