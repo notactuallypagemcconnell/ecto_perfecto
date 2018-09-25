@@ -12,7 +12,7 @@ defmodule EctoPerfecto.Album do
 
   def changeset(album, attrs) do
     album
-    |> cast(attrs, [:id, :title, :artist_id])
+    |> cast(attrs, [:id, :title, :artist_id, :genre_id])
     |> validate_required([:id, :title]) 
   end
 end
